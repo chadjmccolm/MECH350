@@ -55,12 +55,12 @@
 #define MICROSTEP 16        // Microstepping mode. We will use 1/16 microstepping
 #define RPM 500             // Constant RPM to run the stepper
 #define TILT_SPEED 85       // Tray Tilt speed (0 - 100%)
-#define HOME_SPEED 2        // Arm Homing speed (mm/s)
+#define HOME_SPEED 5        // Arm Homing speed (mm/s)
 #define PITCH 8             // Lead screw pitch in mm. This is the amount of linear travel per revolution of the lead screw
-#define MAX_TRAVEL 450      // Maximum travel of the arm (mm)
+#define MAX_TRAVEL 440      // Maximum travel of the arm (mm)
 #define MAX_ANGLE 30        // Maximum angle of the tray (degrees)
 #define MSA_ANGLE 55        // Maximum servo arm angle (degrees)
-#define SERVO_TRIM -6        // Servo Trim on servo end (-180 -> 180 degrees)
+#define SERVO_TRIM -8       // Servo Trim on servo end (-180 -> 180 degrees)
 #define SERVO_REV 1         // Set to 1 to reverse servo direction (Not Implemented)
 
 // Electrical Settings:
@@ -191,7 +191,7 @@ void setup() {
     Serial.println("MECH350 System Controller V1.1.1 by Michael Giles");     // Program start message
     Serial.println("--> This version is fully tested and stable");           // Version message
     
-    delay(1000);                                                             // Small delay at startup to ensure the stepper is ready to go
+    delay(3000);                                                             // Small delay at startup to ensure the stepper is ready to go
     
     Home();                                                                  // Home axes at system start
 }
@@ -204,8 +204,8 @@ void loop() {
     }
     if (digitalRead(STOPPER_PIN) == LOW) {                                   // If end stop is triggered, finish homing process
       Serial.println("Moving Tray to home position...");
-      Move_Tray_Position(MAX_ANGLE);                                         // This is really just for asthetics cause you don't need to zero a servo lol
-      Move_Tray_Position(0);                                                 // Send servo to home location
+//      Move_Tray_Position(MAX_ANGLE);                                         // This is really just for asthetics cause you don't need to zero a servo lol
+//      Move_Tray_Position(0);                                                 // Send servo to home location
       Arm_Position = 0;                                                      // Ensure arm position is set to zero
       Serial.println("Both axes homed successfully");
       Is_Homing = false;                                                     // Exit homing mode

@@ -6,7 +6,7 @@ import sys
 import glob
 import time
 
-# ser = serial.Serial('COM3', 9600)
+# ser = serial.Serial('COM7', 9600)
 
 # Use Tkinter for python 2, tkinter for python 3
 import tkinter as tk
@@ -48,10 +48,15 @@ def refresh_portlist(list_control):
     for port in serial_ports():
         list_control.insert(tk.END, port)
 
-# Function for sending the angle to the Arduino
-def send_angle(angle, entry):
+def serial_command(data):
+    
+    ser.write(data)
+    print("Data written to " + ser.name + ": " + str(data))
 
-    # Attempt to convert the user input to a number
+# Function for sending the angle to the Arduino
+def send_angle(angle, entry, event=None):
+
+    # Attempt to convert the user input to a number)
     try:
         val = int(angle)
 
@@ -60,11 +65,8 @@ def send_angle(angle, entry):
             raise ValueError
 
         # Otherwise print that the angle was sent for debugging
+        serial_command(bytes("T"+angle, 'utf-8'))
         print("sent angle")
-
-        # Change the text entry's value to show the user it has been sent
-        entry.delete(0, tk.END)
-        entry.insert(0, "Sent! (" + angle + ")")
 
     # If the ValueError is triggered because it could not be converted to an int or it's out of range
     except ValueError:
@@ -80,7 +82,7 @@ def send_angle(angle, entry):
     
 
 # Function for sending the travel to the Arduino
-def send_travel(travel, entry):
+def send_travel(travel, entry, event=None):
 
     # Attempt to convert the user input to a number
     try:
@@ -91,11 +93,8 @@ def send_travel(travel, entry):
             raise ValueError
 
         # Otherwise print that the angle was sent for debugging
+        serial_command(bytes("A"+travel, 'utf-8'))
         print("sent travel")
-
-        # Change the text entry's value to show the user it has been sent
-        entry.delete(0, tk.END)
-        entry.insert(0, "Sent! (" + travel + ")")
 
     # If the ValueError is triggered because it could not be converted to an int or it's out of range
     except ValueError:
