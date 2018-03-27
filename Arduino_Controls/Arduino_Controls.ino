@@ -1,7 +1,7 @@
 /* MECH350_Tray_Positioner_Actuation_Code
- * Version: 1.0.0
+ * Version: 1.1.1
  * by Michael Giles
- * Date: March 13, 2018
+ * Date: March 22, 2018
  * 
  * Pin Assignments:
  * D4   ----->  END STOP
@@ -14,10 +14,8 @@
  * D13  ----->  ENABLE
  *
  * Release Notes:
- * This is the first release with full functionality. 
- * Control of the system is done over serial. Full 
- * acceleration profiles and system auto-homing are 
- * supported. Supported commands can be seen in the 
+ * This version fixes a bug where reversing the servo would break 
+ * the auto home function. Supported commands can be seen in the 
  * table below.
  * 
  * Command    Parameter    Example    Description
@@ -26,7 +24,7 @@
  * E          None         E          Enables the stepper motor
  * D          None         D          Disables the stepper motor
  * H          None         H          Moves both the arm and tray to their home positions
- * 
+ *
  * There is a known bug in this release that restricts motor 
  * RPM. Real world motor speed was measured to be ~ 130RPM. 
  * Motor velocities of up to 900RPM can be achieved by disabling 
@@ -58,11 +56,12 @@
 #define RPM 500             // Constant RPM to run the stepper
 #define TILT_SPEED 85       // Tray Tilt speed (0 - 100%)
 #define HOME_SPEED 2        // Arm Homing speed (mm/s)
-#define PITCH 2             // Lead screw pitch in mm. This is the amount of linear travel per revolution of the lead screw (default: 2mm)
+#define PITCH 8             // Lead screw pitch in mm. This is the amount of linear travel per revolution of the lead screw
 #define MAX_TRAVEL 450      // Maximum travel of the arm (mm)
 #define MAX_ANGLE 30        // Maximum angle of the tray (degrees)
-#define SERVO_TRIM 6        // Servo Trim on servo end (0 - 180 degrees)
-#define SERVO_REV 0         // Set to 1 to reverse servo direction (Not Implemented)
+#define MSA_ANGLE 55        // Maximum servo arm angle (degrees)
+#define SERVO_TRIM -6        // Servo Trim on servo end (-180 -> 180 degrees)
+#define SERVO_REV 1         // Set to 1 to reverse servo direction (Not Implemented)
 
 // Electrical Settings:
 #define STOPPER_PIN 4       // Pin 4 corresponds to the end stop 
@@ -99,12 +98,12 @@ void Move_Arm_Position(int New_Position) {
 // Tray Actuation Function:
 void Move_Tray_Position(int New_Position) {
   
-  int New_Rotation = (New_Position * 180);                                   // Convert desired table movement to servo movement
+  int New_Rotation = (New_Position * MSA_ANGLE);                             // Convert desired table movement to servo movement
   New_Rotation = (New_Rotation/MAX_ANGLE) + SERVO_TRIM;
 
-//  if(SERVO_REV == 1) {                                                       // Reverse servo direction based on initial mechanical settings
-//    New_Rotation = 180 - New_Rotation;
-//  }
+  if(SERVO_REV == 1) {                                                       // Reverse servo direction based on initial mechanical settings
+    New_Rotation = MSA_ANGLE - New_Rotation;
+  }
 
   if(New_Rotation >= Tray_Position) {
     for (int pos = Tray_Position; pos <= New_Rotation; pos++) {              // Servo speed control
@@ -189,7 +188,7 @@ void setup() {
     
     Serial.begin(9600);                                                      // Start serial communication with computer at 9600 baud
     while (! Serial);                                                        // Wait until Serial is ready (We shouldn't have to do this but it's a good failsafe)
-    Serial.println("MECH350 System Controller V1.0.0 by Michael Giles");     // Program start message
+    Serial.println("MECH350 System Controller V1.1.1 by Michael Giles");     // Program start message
     Serial.println("--> This version is fully tested and stable");           // Version message
     
     delay(1000);                                                             // Small delay at startup to ensure the stepper is ready to go
@@ -208,7 +207,6 @@ void loop() {
       Move_Tray_Position(MAX_ANGLE);                                         // This is really just for asthetics cause you don't need to zero a servo lol
       Move_Tray_Position(0);                                                 // Send servo to home location
       Arm_Position = 0;                                                      // Ensure arm position is set to zero
-      Tray_Position = 0;                                                     // Ensure tray position is set to zero
       Serial.println("Both axes homed successfully");
       Is_Homing = false;                                                     // Exit homing mode
     }
