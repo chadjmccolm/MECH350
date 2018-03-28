@@ -6,7 +6,19 @@ import sys
 import glob
 import time
 
-# ser = serial.Serial('COM7', 9600)
+ser = serial.Serial()
+ser.baudrate = 9600
+global selected_port
+selected_port = "undefined"
+
+class PortError(Exception):
+    def __init__(self, message=None, errors=None):
+
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+
+        # Now for your custom code...
+        self.errors = errors
 
 # Use Tkinter for python 2, tkinter for python 3
 import tkinter as tk
@@ -41,6 +53,11 @@ def serial_ports():
 # Refreshes that list of ports in the list_control object
 def refresh_portlist(list_control):
 
+    # Close already open port if it's open
+    if(ser.is_open): 
+        ser.close()
+        print("Closed open port to refresh list.")
+
     # Remove all ports from list
     list_control.delete(0, tk.END)
 
@@ -48,10 +65,64 @@ def refresh_portlist(list_control):
     for port in serial_ports():
         list_control.insert(tk.END, port)
 
+def setup_port(evt):
+
+    global ser
+
+    try:
+        w = evt.widget
+        index = int(w.curselection()[0])
+
+        value = w.get(index)
+        global selected_port
+        selected_port = str(value)
+
+        ser.port = selected_port
+        if(ser.is_open):
+            ser.close()
+            print("old serial closed")
+        ser.open()
+        print("successfully openned port")
+
+    except serial.serialutil.SerialException as e:
+        # Show a messagebox with a warning about serial error
+        messagebox.showwarning(
+            "Error",
+            e
+        )
+
+    except IndexError:
+        print("If this message appears after you highlight the text in an entry field, don't worry about it. Otherwise there is an IndexError.")
+
 def serial_command(data):
-    
-    ser.write(data)
-    print("Data written to " + ser.name + ": " + str(data))
+
+    try:
+        if(selected_port == "undefined"):
+            raise PortError
+
+        ser.write(data)
+        print("Data written to " + ser.name + ": " + str(data))
+
+    except PortError:
+        # Show a messagebox with a warning about port error
+        messagebox.showwarning(
+            "Error",
+            "Port has not been defined."
+        )
+
+        # And print that the message was not sent (for debugging)
+        print("not sent")
+
+    except serial.serialutil.SerialException as e:
+        # Show a messagebox with a warning about serial error
+        messagebox.showwarning(
+            "Error",
+            e
+        )
+
+        # And print that the message was not sent (for debugging)
+        print("not sent")
+
 
 # Function for sending the angle to the Arduino
 def send_angle(angle, entry, event=None):
@@ -65,8 +136,8 @@ def send_angle(angle, entry, event=None):
             raise ValueError
 
         # Otherwise print that the angle was sent for debugging
+        print("Sent angle to serial converter")
         serial_command(bytes("T"+angle, 'utf-8'))
-        print("sent angle")
 
     # If the ValueError is triggered because it could not be converted to an int or it's out of range
     except ValueError:
@@ -93,8 +164,8 @@ def send_travel(travel, entry, event=None):
             raise ValueError
 
         # Otherwise print that the angle was sent for debugging
+        print("Sent travel to serial converter")
         serial_command(bytes("A"+travel, 'utf-8'))
-        print("sent travel")
 
     # If the ValueError is triggered because it could not be converted to an int or it's out of range
     except ValueError:
@@ -124,6 +195,7 @@ class SerialWindow(tk.Frame):
         # Create the serial list
         serial_list = tk.Listbox(self, width=60, height=4)
         serial_list.grid(row=0, column=1, pady=5, padx=5, rowspan=2)
+        serial_list.bind('<<ListboxSelect>>', setup_port)
 
         # Create the button to refresh the list
         serial_refresh = tk.Button(self, text="Refresh", command = lambda: refresh_portlist(serial_list))
