@@ -160,7 +160,7 @@ def send_travel(travel, entry, event=None):
         val = int(travel)
 
         # If that number is too big or too small throw a ValueError
-        if(val > 450 or val < 0):
+        if(val > 440 or val < 0):
             raise ValueError
 
         # Otherwise print that the angle was sent for debugging
@@ -173,7 +173,7 @@ def send_travel(travel, entry, event=None):
         # Show a messagebox with a warning about input values
         messagebox.showwarning(
             "Error",
-            "Please input an integer from 0 to 450 mm."
+            "Please input an integer from 0 to 440 mm."
         )
 
         # And print that the message was not sent (for debugging)
